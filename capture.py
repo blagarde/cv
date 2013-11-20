@@ -2,9 +2,12 @@
 
 import os
 import cv2
+from threading import Thread
 from app import ComputerVisionApp
 from argparse import ArgumentParser
 from datetime import datetime
+from time import sleep
+
 
 # Definition of output format
 WIDTH, HEIGHT = 80, 60
@@ -15,6 +18,23 @@ DEFAULT_FMT = 'ppm'
 
 def now_str():
     return str(datetime.now()).replace(':','').replace(' ','_')
+
+
+class CaptureThread(Thread):
+    running = False
+    callback = None
+    exit = False
+
+    def run(self):
+        while not self.exit:
+            if self.running:
+                self.callback()
+                sleep(1)
+
+    def toggle(self):
+        self.running = not self.running
+        print "Capture", "started" if self.running else "stopped"
+
 
 class App(ComputerVisionApp):
     def __init__(self, folder=DEFAULT_ROOT, gray=True, format=DEFAULT_FMT, size=None):
@@ -27,8 +47,17 @@ class App(ComputerVisionApp):
             os.makedirs(folder)
             print "Created:", folder
         self.folder = folder
+        self.thread = CaptureThread()
+        self.thread.callback = self.save_frame
+        self.thread.start()
 
     def on_space(self):
+        self.save_frame()
+
+    def do_b(self):
+        self.thread.toggle()
+
+    def save_frame(self):
         frame = self.get_frame()
         now = now_str()
         filename = now + '.' + self.ext
@@ -37,6 +66,11 @@ class App(ComputerVisionApp):
             frame = cv2.resize(frame, self.size)
         cv2.imwrite(outpath, frame)
         print now, '- Captured frame: ', outpath
+
+    def on_escape(self):
+        self.thread.exit = True
+        raise SystemExit("Clean exit")
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Open a capture device and save frames to a folder")
