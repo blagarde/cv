@@ -20,7 +20,7 @@ class ComputerVisionApp(object):
                 self.on_escape()
             elif key == 32:   # Space
                 self.on_space()
-            elif key != -1:
+            elif 0 < key < 256:
                 method_name = "do_" + chr(key)
                 try:
                     method = getattr(self, method_name)
@@ -42,32 +42,6 @@ class ComputerVisionApp(object):
 
     def to_grayscale(self, frame):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-
-        '''
-            def main_loop(self):
-                capWidth  = int(cv2.GetCaptureProperty(self.cap, cv2.CV_CAP_PROP_FRAME_WIDTH))
-                capHeight = int(cv2.GetCaptureProperty(self.cap, cv2.CV_CAP_PROP_FRAME_HEIGHT))
-                print 'Started Webcam at resolution ' + str(capWidth) + 'x' + str(capHeight) + '. Press <space> to acquire frame and <ESC> to exit.'
-                print 'Files will be saved in', self.ext, 'format in :', self.folder
-                # Manually specify capture channels here, depending on hardware (webcam) :
-                inputChannels = 3
-                capSize = (capWidth, capHeight)
-                cv2.SetCaptureProperty(cap, cv2.CV_CAP_PROP_FRAME_WIDTH, capWidth)
-                cv2.SetCaptureProperty(cap, cv2.CV_CAP_PROP_FRAME_HEIGHT, capHeight)
-
-            def capture(self):
-                img = cv2.QueryFrame(cap)
-                resizedImage = cv2.Resize(img, interpolation=cv2.CV_INTER_LINEAR) # Resize to output size
-                
-                if self.gray =='YES':
-                    cv.CvtColor(resizedImage, outputImg, cv.CV_RGB2GRAY)  # Convert to grayscale
-                else:
-                    outputImg = resizedImage
-                        
-            def show(self, img):
-                cv.ShowImage(win, outputImg) # Display
-        '''
 
 
 CVApp = ComputerVisionApp
