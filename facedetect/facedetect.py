@@ -1,13 +1,28 @@
+#!/usr/bin/env python
 import cv2
 import os
 from argparse import ArgumentParser
 
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+FACES = os.path.join(HERE, 'haarcascade_frontalface_default.xml')
+EYES = os.path.join(HERE, 'haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier(FACES)
+eye_cascade = cv2.CascadeClassifier(EYES)
+
+
+def xfaces(img_stream):
+    """A generator that yields any faces detected in the input images"""
+    for img in img_stream:
+        faces = face_cascade.detectMultiScale(img, 1.3, 5)
+        for i, rect in enumerate(faces):
+            x, y, w, h = rect
+            roi = img[y:y + h, x:x + w]
+            yield roi
 
 
 def find_faces(path, outdir):
-    gray = cv2.imread(path)
+    gray = cv2.imread(path, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     for x, y, w, h in faces:
         cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 2)
