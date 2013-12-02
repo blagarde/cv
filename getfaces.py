@@ -1,21 +1,14 @@
-from utils import ximages, xresize, write_to
+from utils import ximages, xresize, xvideo, write_to
 from facedetect.facedetect import xfaces
 from bing import xbing, zbing
 from argparse import ArgumentParser
 from config import DEFAULT_ROOT, DEFAULT_FMT, IMG_FORMATS
 
 
-def ni(x):
-    raise NotImplementedError()
-
-
-xwebcam = xvideo = ni
-
-
 DISPATCH = {
     'folder': ximages,
     'bing': xbing,
-    'webcam': xwebcam,
+    'webcam': xvideo,
     'movie': xvideo
 }
 
