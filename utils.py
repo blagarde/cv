@@ -21,16 +21,13 @@ def ximages(dirpath, formats=IMG_FORMATS, gray=True):
                 	yield img
 
 
-def xvideo(path, gray=False):
+def xvideo(path, gray=True):
     cap = cv2.VideoCapture(path)
-    try:
-        while(cap.isOpened()):
-            ret, frame = cap.read()
-            yield cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if gray else frame
-    except Exception as e:
-        sys.stderr.write("e. %s" % e)
-    finally:
-        cap.release()
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            raise StopIteration("Frame could not be retrieved")
+        yield cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if gray else frame
 
 
 def xweb(urls, maxretries=2):
