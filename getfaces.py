@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from utils import ximages, xresize, xvideo, write_to
 from facedetect.facedetect import xfaces
 from bing import xbing, zbing
