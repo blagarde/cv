@@ -18,7 +18,7 @@ def get_image_observations(folders):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Train an image classifier")
-    parser.add_argument('folders', type=str, nargs='+', help="List of folders paths, each containing a specific category of image. The format/size of the images must be consistent.")
+    parser.add_argument('folders', type=str, nargs='+', help="List of folder paths, each containing a specific category of image. The format/size of the images must be consistent.")
     parser.add_argument('-v', '--validate', type=int, default=None, metavar='N_FOLDS',
         help="Instead of creating a model, get the classifier's precision using K-fold validation (supply the number of folds).")
     parser.add_argument('-o', '--output', type=str, default='model.pkl', metavar='OUTPATH', help="Save model to a file.")

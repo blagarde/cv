@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from sklearn import svm
 from sklearn.cross_validation import StratifiedKFold
