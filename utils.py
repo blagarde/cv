@@ -8,8 +8,9 @@ from cStringIO import StringIO
 from config import IMG_FORMATS, DEFAULT_SIZE, DEFAULT_FMT
 
 
-def ximages(dirpath, formats=IMG_FORMATS, gray=True):
+def ximages(dirpath, formats=IMG_FORMATS, gray=True, checksize=False):
     """A generator that yields any images found in the input folder"""
+    sizes = set()
     for root, dirs, files in os.walk(dirpath):
         for fn in files:
             ext = fn.split(os.path.extsep)[-1]
@@ -18,7 +19,10 @@ def ximages(dirpath, formats=IMG_FORMATS, gray=True):
                 flags = cv2.CV_LOAD_IMAGE_GRAYSCALE if gray else cv2.CV_LOAD_IMAGE_COLOR
                 img = cv2.imread(path, flags=flags)
                 if img is not None:
-                	yield img
+                    sizes |= set([img.shape])
+                    if checksize and len(sizes) > 1:
+                        raise ValueError("Folder contains images with different sizes: %s" % dirpath)
+                    yield img
 
 
 def xvideo(path, gray=True):
