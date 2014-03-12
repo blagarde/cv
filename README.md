@@ -14,6 +14,7 @@ At the moment, it mainly consists of a few command line utilities which can allo
 - OpenCV
 - requests
 - scikit-learn
+- gevent (optional, but recommended for faster web scraping)
 
 ## Overview
 ###I. Collect pictures of faces
