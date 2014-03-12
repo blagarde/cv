@@ -1,13 +1,27 @@
 import os
+import re
 import sys
 import cv2
 import socket
 import numpy as np
-from urllib2 import urlopen, URLError
+import urlparse
+from decorators import limitable
 from cStringIO import StringIO
-from config import IMG_FORMATS, DEFAULT_SIZE, DEFAULT_FMT
+from config import IMG_FORMATS, DEFAULT_SIZE, DEFAULT_FMT, MAX_RETRIES, POOL_SIZE
+using_gevent = False
+try:
+    import gevent
+    from gevent.pool import Pool
+    from gevent import monkey
+    monkey.patch_socket()
+    monkey.patch_ssl()
+    using_gevent = True
+except ImportError:
+    print >> sys.stderr, "w. Not using gevent. Will be slower."
+from urllib2 import urlopen, URLError
 
 
+@limitable
 def ximages(dirpath, formats=IMG_FORMATS, gray=True, checksize=False):
     """A generator that yields any images found in the input folder"""
     sizes = set()
@@ -25,6 +39,7 @@ def ximages(dirpath, formats=IMG_FORMATS, gray=True, checksize=False):
                     yield img
 
 
+@limitable
 def xvideo(path, gray=True):
     cap = cv2.VideoCapture(path)
     while True:
@@ -34,22 +49,69 @@ def xvideo(path, gray=True):
         yield cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if gray else frame
 
 
-def xweb(urls, maxretries=2):
-    for url in urls:
-        retries = maxretries
-        while retries > 0:
-            try:
-                url = url.encode('utf8')
-                data = urlopen(url).read()
-                flike = StringIO(data)
-                a = np.asarray(bytearray(flike.read()), dtype=np.uint8)
-                img = cv2.imdecode(a, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
-                if img is not None:
-                    yield img
-                retries = 0
-            except (URLError, socket.error) as e:
-                print >> sys.stderr, 'w.', url, ':', e
-                retries -= 1
+def url_encode_non_ascii(b):
+    return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
+
+
+def iri2uri(iri):
+    parts = urlparse.urlparse(iri)
+    return urlparse.urlunparse(
+        part.encode('idna') if parti == 1 else url_encode_non_ascii(part.encode('utf-8'))
+        for parti, part in enumerate(parts)
+    )
+
+
+def get_image(iri):
+    retries = 2  # maxretries
+    while retries > 0:
+        try:
+            uri = iri2uri(iri)
+            data = urlopen(uri).read()
+            flike = StringIO(data)
+            a = np.asarray(bytearray(flike.read()), dtype=np.uint8)
+            img = cv2.imdecode(a, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
+            return img
+        except (URLError, socket.error, UnicodeError) as e:
+            print >> sys.stderr, 'w.', uri, ':', e
+            retries -= 1
+
+
+def get_images(iris):
+    jobs = [gevent.spawn(get_image, i) for i in iris]
+    gevent.joinall(jobs)
+    return [j.value for j in jobs if j.value is not None]
+
+
+def iriopen(iri, retries=MAX_RETRIES):
+    '''Takes an Internationalized Resource Identifier and returns the image it points to'''
+    while retries > 0:
+        try:
+            uri = iri2uri(iri)
+            data = urlopen(uri).read()
+            flike = StringIO(data)
+            a = np.asarray(bytearray(flike.read()), dtype=np.uint8)
+            img = cv2.imdecode(a, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
+            return img
+        except (URLError, socket.error, UnicodeError) as e:
+            print >> sys.stderr, 'w.', uri, ':', e
+            retries -= 1
+
+
+@limitable
+def xweb(iris):
+    for i in iris:
+        img = iriopen(i)
+        if img is not None:
+            yield img
+
+
+if using_gevent:
+    @limitable
+    def xweb(iris):
+        pool = Pool(POOL_SIZE)
+        for img in pool.imap_unordered(iriopen, iris):
+            if img is not None:
+                yield img
 
 
 def xresize(img_stream, size=DEFAULT_SIZE, interpolation=cv2.INTER_LINEAR):

@@ -5,3 +5,6 @@ IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'jpe', 'jp2', 'png', 'pbm', 'ppm', 'gif', '
 DEFAULT_SIZE = 400, 300
 DEFAULT_ROOT = os.path.join(HERE, 'output')
 DEFAULT_FMT = 'ppm'
+
+POOL_SIZE = 100
+MAX_RETRIES = 2
