@@ -33,15 +33,15 @@ def xbinglinks(search, limit=100, forever=False, maxemptyqueries=2):
 
 
 xbing = lambda x: xweb(xbinglinks(x, forever=True))
-zbing = lambda x: xweb(xbinglinks(x))
+zbing = lambda x, l: xweb(xbinglinks(x, forever=True), limit=l)
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Capture faces")
+    parser = ArgumentParser(description="Capture images")
     parser.add_argument('-o', '--output', default=DEFAULT_ROOT, type=str, help="Path to destination folder (must be writable)")
-    parser.add_argument('-n', '--nfaces', type=int, default=None, help="Number of faces to collect")
+    parser.add_argument('-n', '--nimages', type=int, default=None, help="Number of images to collect")
     parser.add_argument('-f', '--format', type=str, default=DEFAULT_FMT, choices=IMG_FORMATS, help="Output image file format")
     parser.add_argument('source', type=str, help="Single argument, e.g. folder name, search query, webcam URL, video path.")
     args = parser.parse_args()
 
-    write_to(zbing(args.source), args.output, format=args.format)
+    write_to(zbing(args.source, args.nimages), args.output, format=args.format)
