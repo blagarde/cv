@@ -11,27 +11,26 @@ face_cascade = cv2.CascadeClassifier(FACES)
 eye_cascade = cv2.CascadeClassifier(EYES)
 
 
+def detect(img):
+    return face_cascade.detectMultiScale(img, 1.3, 5)
+
+
 def xfaces(img_stream):
     """A generator that yields any faces detected in the input images"""
     for img in img_stream:
-        faces = face_cascade.detectMultiScale(img, 1.3, 5)
+        faces = detect(img)
         for i, rect in enumerate(faces):
             x, y, w, h = rect
             roi = img[y:y + h, x:x + w]
             yield roi
 
 
-def find_faces(path, outdir):
-    gray = cv2.imread(path, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+def draw_faces(gray_img, outpath):
+    faces = detect(gray_img)
     for x, y, w, h in faces:
-        cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 255, 255), 2)
-
+        cv2.rectangle(gray_img, (x, y), (x + w, y + h), (255, 255, 255), 2)
     if len(faces) > 0:
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-        outpath = os.path.join(outdir, os.path.basename(path))
-        cv2.imwrite(outpath, gray)
+        cv2.imwrite(outpath, gray_img)
         print "Wrote: %s - %i face(s)" % (outpath, len(faces))
 
 
@@ -42,8 +41,16 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', default='output', help="Output folder")
     args = parser.parse_args()
 
+    outdir = args.output
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
+        print "Created: {d}".format(outdir)
+
     for root, dirs, files in os.walk(args.dirname):
         for fn in files:
             if fn.endswith(args.format):
                 path = os.path.join(root, fn)
-                find_faces(path, args.output)
+                gray = cv2.imread(path, flags=cv2.CV_LOAD_IMAGE_GRAYSCALE)
+
+                outpath = os.path.join(args.output, os.path.basename(path))
+                draw_faces(gray, outpath)
